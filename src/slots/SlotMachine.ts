@@ -100,24 +100,43 @@ export class SlotMachine {
 
     }
 
+    /*
+     * Stops each reel with a staggered delay and listens for when each one completes deceleration.
+     * 
+     * Instead of using a fixed timeout to determine when all reels have stopped,
+     * we now use the `Reel.onStop()` callback. This ensures we precisely know
+     * when the final reel finishes its animation, avoiding timing issues.
+     * 
+     * Benefits:
+     * - More accurate handling of reel animations
+     * - Prevents premature UI interaction re-enablement
+     * - Cleaner and more maintainable code using event-driven design
+     */
     private stopSpin(): void {
+        let reelsStopped = 0;
+
         for (let i = 0; i < this.reels.length; i++) {
             setTimeout(() => {
-                this.reels[i].stopSpin();
+                const reel = this.reels[i];
+                reel.stopSpin();
 
-                // If this is the last reel, check for wins and enable spin button
-                if (i === this.reels.length - 1) {
-                    setTimeout(() => {
+                // Register a callback to know when this specific reel stops
+                reel.onStop(() => {
+                    reelsStopped++;
+
+                    // When the last reel finishes its deceleration
+                    if (reelsStopped === this.reels.length) {
                         this.checkWin();
                         sound.stop('Reel spin');
                         this.isSpinning = false;
+
                         if (this.spinButton) {
                             this.spinButton.texture = AssetLoader.getTexture('button_spin.png');
                             this.spinButton.interactive = true;
                         }
-                    }, 500);
-                }
-            }, i * 400);
+                    }
+                });
+            }, i * 400); // Staggered stop delay
         }
     }
 

@@ -18,13 +18,17 @@ export class Reel {
     private speed: number = 0;
     private isSpinning: boolean = false;
 
+    // This optional callback will be assigned externally using `onStop()`.
+    // It's triggered once the reel finishes slowing down and completely stops.
+    private onStopCallback?: () => void;
+
     constructor(symbolCount: number, symbolSize: number) {
         this.container = new PIXI.Container();
         this.symbols = [];
         this.symbolSize = symbolSize;
         this.symbolCount = symbolCount;
-        this.applyMask();
 
+        this.applyMask();
         this.createSymbols();
     }
 
@@ -65,16 +69,15 @@ export class Reel {
         if (!this.isSpinning && this.speed === 0) return;
 
         // TODO:Move symbols horizontally
-        // Avoid Redundant Calculations in Loops
-        const minX = Math.min(...this.symbols.map(s => s.x));
+        const minX = Math.min(...this.symbols.map(s => s.x)); // Avoid Redundant Calculations in Loops
         for (const symbol of this.symbols) {
             symbol.x += this.speed * delta;
 
             if (symbol.x > this.symbolCount * this.symbolSize) {
                 symbol.x = minX - this.symbolSize;
 
-                const newSymbol = this.createRandomSymbol();
-                symbol.texture = newSymbol.texture;
+                const textureName = SYMBOL_TEXTURES[Math.floor(Math.random() * SYMBOL_TEXTURES.length)];
+                symbol.texture = AssetLoader.getTexture(textureName);
             }
         }
 
@@ -86,6 +89,7 @@ export class Reel {
             if (this.speed < 0.5) {
                 this.speed = 0;
                 this.snapToGrid();
+                this.onStopCallback?.(); // Notify that the reel has stopped
             }
         }
     }
@@ -108,5 +112,13 @@ export class Reel {
     public stopSpin(): void {
         this.isSpinning = false;
         // The reel will gradually slow down in the update method
+    }
+
+
+    // This method allows other parts of the game (like SlotMachine) to register
+    // a custom action to perform after the reel has stopped spinning.
+    // Example: checking for win condition, playing a sound, enabling UI.
+    public onStop(callback: () => void): void {
+        this.onStopCallback = callback;
     }
 }
