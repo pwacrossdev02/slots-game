@@ -31,20 +31,45 @@ export class Reel {
 
     private createSymbols(): void {
         // Create symbols for the reel, arranged horizontally
+        for (let i = 0; i < this.symbolCount; i++) {
+            const symbol = this.createRandomSymbol();
+            symbol.x = i * this.symbolSize;
+            symbol.y = 0;
+            symbol.width = this.symbolSize;
+            symbol.height = this.symbolSize;
+
+            this.symbols.push(symbol);
+            this.container.addChild(symbol);
+        }
     }
 
     private createRandomSymbol(): PIXI.Sprite {
         // TODO:Get a random symbol texture
+        const textureName = SYMBOL_TEXTURES[Math.floor(Math.random() * SYMBOL_TEXTURES.length)];
+        const texture = AssetLoader.getTexture(textureName);
 
         // TODO:Create a sprite with the texture
-
-        return new PIXI.Sprite();
+        return new PIXI.Sprite(texture);
     }
 
     public update(delta: number): void {
         if (!this.isSpinning && this.speed === 0) return;
 
         // TODO:Move symbols horizontally
+        for (const symbol of this.symbols) {
+            symbol.x -= this.speed * delta;
+
+            // If the symbol moved completely off-screen to the left, wrap it to the right
+            if (symbol.x + this.symbolSize < 0) {
+                // Find the rightmost symbol
+                const maxX = Math.max(...this.symbols.map(s => s.x));
+                symbol.x = maxX + this.symbolSize;
+
+                // Optionally replace with new random symbol
+                const newSymbol = this.createRandomSymbol();
+                symbol.texture = newSymbol.texture;
+            }
+        }
 
         // If we're stopping, slow down the reel
         if (!this.isSpinning && this.speed > 0) {
@@ -60,7 +85,12 @@ export class Reel {
 
     private snapToGrid(): void {
         // TODO: Snap symbols to horizontal grid positions
+        this.symbols.sort((a, b) => a.x - b.x);
 
+        for (let i = 0; i < this.symbols.length; i++) {
+            const symbol = this.symbols[i];
+            symbol.x = i * this.symbolSize;
+        }
     }
 
     public startSpin(): void {

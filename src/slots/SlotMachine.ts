@@ -76,7 +76,7 @@ export class SlotMachine {
         this.isSpinning = true;
 
         // Play spin sound
-        sound.play('Reel spin');
+        sound.play('Reel spin', true);
 
         // Disable spin button
         if (this.spinButton) {
@@ -106,8 +106,8 @@ export class SlotMachine {
                 if (i === this.reels.length - 1) {
                     setTimeout(() => {
                         this.checkWin();
+                        sound.stop('Reel spin');
                         this.isSpinning = false;
-
                         if (this.spinButton) {
                             this.spinButton.texture = AssetLoader.getTexture('button_spin.png');
                             this.spinButton.interactive = true;
@@ -123,11 +123,24 @@ export class SlotMachine {
         const randomWin = Math.random() < 0.3; // 30% chance of winning
 
         if (randomWin) {
-            sound.play('win');
+            sound.play('win', true);
             console.log('Winner!');
 
             if (this.winAnimation) {
                 // TODO: Play the win animation found in "big-boom-h" spine
+                this.winAnimation.visible = true;
+
+                const hasBoom = this.winAnimation.state.hasAnimation('boom');
+                const animationName = hasBoom ? 'boom' : this.winAnimation.spineData.animations[0].name;
+
+                this.winAnimation.state.setAnimation(0, animationName, false);
+
+                this.winAnimation.state.addListener({
+                    complete: () => {
+                        this.winAnimation!.visible = false;
+                        sound.stop('win');
+                    }
+                });
             }
         }
     }
