@@ -25,6 +25,7 @@ export class Reel {
         this.symbols = [];
         this.symbolSize = symbolSize;
         this.symbolCount = symbolCount;
+        this.applyMask();
 
         this.createSymbols();
     }
@@ -43,6 +44,16 @@ export class Reel {
         }
     }
 
+    private applyMask(): void {
+        const mask = new PIXI.Graphics();
+        mask.beginFill(0xffffff);
+        mask.drawRect(0, 0, this.symbolCount * this.symbolSize, this.symbolSize);
+        mask.endFill();
+
+        this.container.addChild(mask);
+        this.container.mask = mask;
+    }
+
     private createRandomSymbol(): PIXI.Sprite {
         // TODO:Get a random symbol texture
         const textureName = SYMBOL_TEXTURES[Math.floor(Math.random() * SYMBOL_TEXTURES.length)];
@@ -57,15 +68,12 @@ export class Reel {
 
         // TODO:Move symbols horizontally
         for (const symbol of this.symbols) {
-            symbol.x -= this.speed * delta;
+            symbol.x += this.speed * delta;
 
-            // If the symbol moved completely off-screen to the left, wrap it to the right
-            if (symbol.x + this.symbolSize < 0) {
-                // Find the rightmost symbol
-                const maxX = Math.max(...this.symbols.map(s => s.x));
-                symbol.x = maxX + this.symbolSize;
+            if (symbol.x > this.symbolCount * this.symbolSize) {
+                const minX = Math.min(...this.symbols.map(s => s.x));
+                symbol.x = minX - this.symbolSize;
 
-                // Optionally replace with new random symbol
                 const newSymbol = this.createRandomSymbol();
                 symbol.texture = newSymbol.texture;
             }
