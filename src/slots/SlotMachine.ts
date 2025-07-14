@@ -5,11 +5,13 @@ import { sound } from '../utils/sound';
 import { AssetLoader } from '../utils/AssetLoader';
 import {Spine} from "pixi-spine";
 
-const REEL_COUNT = 4;
-const SYMBOLS_PER_REEL = 6;
-const SYMBOL_SIZE = 150;
-const REEL_HEIGHT = SYMBOL_SIZE;
-const REEL_SPACING = 10;
+import {
+    SYMBOLS_PER_REEL,
+    SYMBOL_SIZE,
+    REEL_COUNT,
+    REEL_SPACING,
+    REEL_HEIGHT
+} from '../config/constants';
 
 export class SlotMachine {
     public container: PIXI.Container;
@@ -64,9 +66,10 @@ export class SlotMachine {
     }
 
     public update(delta: number): void {
-        // Update each reel
+        // Update each reel, speed may vary across devices. Can cap delta to avoid jumps
+        const cappedDelta = Math.min(delta, 1.5);
         for (const reel of this.reels) {
-            reel.update(delta);
+            reel.update(cappedDelta);
         }
     }
 

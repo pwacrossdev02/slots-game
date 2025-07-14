@@ -1,5 +1,6 @@
 import * as PIXI from 'pixi.js';
 import { AssetLoader } from '../utils/AssetLoader';
+import { SPIN_SPEED, SLOWDOWN_RATE } from '../config/constants';
 
 const SYMBOL_TEXTURES = [
     'symbol1.png',
@@ -8,9 +9,6 @@ const SYMBOL_TEXTURES = [
     'symbol4.png',
     'symbol5.png',
 ];
-
-const SPIN_SPEED = 50; // Pixels per frame
-const SLOWDOWN_RATE = 0.95; // Rate at which the reel slows down
 
 export class Reel {
     public container: PIXI.Container;
@@ -67,11 +65,12 @@ export class Reel {
         if (!this.isSpinning && this.speed === 0) return;
 
         // TODO:Move symbols horizontally
+        // Avoid Redundant Calculations in Loops
+        const minX = Math.min(...this.symbols.map(s => s.x));
         for (const symbol of this.symbols) {
             symbol.x += this.speed * delta;
 
             if (symbol.x > this.symbolCount * this.symbolSize) {
-                const minX = Math.min(...this.symbols.map(s => s.x));
                 symbol.x = minX - this.symbolSize;
 
                 const newSymbol = this.createRandomSymbol();
